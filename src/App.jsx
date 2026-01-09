@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 export default function App() {
   // Store Configuration
@@ -289,6 +289,34 @@ export default function App() {
   const [newsletter, setNewsletter] = useState('');
   const [showNewsletter, setShowNewsletter] = useState(false);
 
+  // Sync view with URL hash so there are separate links for admin and customer
+  useEffect(() => {
+    const applyHash = () => {
+      try {
+        const h = (window.location.hash || '').replace('#/', '').toLowerCase();
+        if (h === 'admin') {
+          setCurrentView('admin');
+          if (!isLoggedIn) setShowLoginModal(true);
+        } else setCurrentView('customer');
+      } catch (e) {
+        setCurrentView('customer');
+      }
+    };
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
+  }, []);
+
+  // Mobile responsiveness: track small screens and mobile menu
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   // Available Coupons (Admin can manage)
   const [coupons, setCoupons] = useState([
     { code: 'WELCOME10', discount: 10, type: 'percent', minOrder: 2000, maxDiscount: 1000, active: true, usageLimit: 100, usedCount: 45 },
@@ -475,49 +503,51 @@ export default function App() {
   // Render stars
   const renderStars = (rating) => '★'.repeat(rating) + '☆'.repeat(5 - rating);
 
-  // Styles
+  // Styles with mobile responsiveness
   const s = {
     app: { minHeight: '100vh', background: modeColors.bg, color: modeColors.text, fontFamily: "'Poppins', sans-serif", transition: 'background 0.3s, color 0.3s' },
     header: { background: modeColors.bgHeader, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1000, borderBottom: `1px solid ${theme.primary}22` },
-    topBar: { display: 'flex', justifyContent: 'space-between', padding: '10px 32px', fontSize: '12px', color: modeColors.textSecondary, borderBottom: `1px solid ${modeColors.border}` },
-    mainNav: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', maxWidth: '1600px', margin: '0 auto' },
-    logo: { display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' },
-    logoText: { fontSize: '28px', fontWeight: '800', background: theme.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-    searchBar: { display: 'flex', background: modeColors.bgTertiary, borderRadius: '14px', padding: '4px', border: `1px solid ${modeColors.border}`, width: '400px' },
-    searchInput: { flex: 1, background: 'transparent', border: 'none', padding: '12px 18px', color: modeColors.text, fontSize: '14px', outline: 'none' },
-    searchBtn: { padding: '12px 24px', background: theme.gradient, border: 'none', borderRadius: '10px', color: '#fff', fontWeight: '600', cursor: 'pointer' },
-    iconBtn: { position: 'relative', background: modeColors.bgTertiary, border: 'none', borderRadius: '12px', padding: '12px', cursor: 'pointer', fontSize: '20px', color: modeColors.text },
+    topBar: { display: isMobile ? 'none' : 'flex', justifyContent: 'space-between', padding: '10px 32px', fontSize: '12px', color: modeColors.textSecondary, borderBottom: `1px solid ${modeColors.border}` },
+    mainNav: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 16px' : '16px 32px', maxWidth: '1600px', margin: '0 auto', flexWrap: 'wrap', gap: isMobile ? '12px' : '16px' },
+    logo: { display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px', cursor: 'pointer' },
+    logoText: { fontSize: isMobile ? '20px' : '28px', fontWeight: '800', background: theme.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
+    searchBar: { display: 'flex', background: modeColors.bgTertiary, borderRadius: '14px', padding: '4px', border: `1px solid ${modeColors.border}`, width: isMobile ? '100%' : '400px', order: isMobile ? 3 : 2 },
+    searchInput: { flex: 1, background: 'transparent', border: 'none', padding: isMobile ? '10px 14px' : '12px 18px', color: modeColors.text, fontSize: '14px', outline: 'none' },
+    searchBtn: { padding: isMobile ? '10px 20px' : '12px 24px', background: theme.gradient, border: 'none', borderRadius: '10px', color: '#fff', fontWeight: '600', cursor: 'pointer', fontSize: isMobile ? '13px' : '14px' },
+    iconBtn: { position: 'relative', background: modeColors.bgTertiary, border: 'none', borderRadius: '12px', padding: isMobile ? '10px' : '12px', cursor: 'pointer', fontSize: isMobile ? '18px' : '20px', color: modeColors.text },
     badge: { position: 'absolute', top: '-5px', right: '-5px', background: theme.primary, color: '#fff', fontSize: '11px', fontWeight: '700', padding: '2px 7px', borderRadius: '10px' },
-    main: { display: 'grid', gridTemplateColumns: '280px 1fr', gap: '32px', padding: '32px', maxWidth: '1600px', margin: '0 auto' },
-    sidebar: { background: modeColors.bgCard, borderRadius: '24px', padding: '28px', border: `1px solid ${modeColors.border}`, height: 'fit-content', position: 'sticky', top: '120px', boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)' },
-    filterSection: { marginBottom: '28px' },
+    main: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', gap: isMobile ? '16px' : '32px', padding: isMobile ? '16px' : '32px', maxWidth: '1600px', margin: '0 auto' },
+    sidebar: { background: modeColors.bgCard, borderRadius: isMobile ? '16px' : '24px', padding: isMobile ? '16px' : '28px', border: `1px solid ${modeColors.border}`, height: 'fit-content', position: isMobile ? 'relative' : 'sticky', top: '120px', boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)' },
+    filterSection: { marginBottom: isMobile ? '20px' : '28px' },
     filterTitle: { fontSize: '13px', fontWeight: '700', marginBottom: '14px', color: theme.primary, textTransform: 'uppercase', letterSpacing: '1px' },
     filterOption: { padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', marginBottom: '6px', fontSize: '14px', transition: 'all 0.2s' },
-    colorSwatch: { width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', border: '3px solid transparent', transition: 'all 0.2s' },
-    sizeBtn: { padding: '10px 16px', border: `1px solid ${modeColors.borderLight}`, borderRadius: '10px', background: modeColors.bgTertiary, color: modeColors.text, cursor: 'pointer', fontSize: '13px', fontWeight: '600' },
-    productGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' },
-    productCard: { background: modeColors.bgCard, borderRadius: '24px', overflow: 'hidden', border: `1px solid ${modeColors.border}`, cursor: 'pointer', transition: 'all 0.3s', boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)' },
+    colorSwatch: { width: isMobile ? '28px' : '32px', height: isMobile ? '28px' : '32px', borderRadius: '50%', cursor: 'pointer', border: '3px solid transparent', transition: 'all 0.2s' },
+    sizeBtn: { padding: isMobile ? '8px 12px' : '10px 16px', border: `1px solid ${modeColors.borderLight}`, borderRadius: '10px', background: modeColors.bgTertiary, color: modeColors.text, cursor: 'pointer', fontSize: '13px', fontWeight: '600', minWidth: isMobile ? '40px' : '48px', textAlign: 'center' },
+    productGrid: { display: 'grid', gridTemplateColumns: isMobile ? 'repeat(auto-fill, minmax(160px, 1fr))' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: isMobile ? '16px' : '24px' },
+    productCard: { background: modeColors.bgCard, borderRadius: isMobile ? '16px' : '24px', overflow: 'hidden', border: `1px solid ${modeColors.border}`, cursor: 'pointer', transition: 'all 0.3s', boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)' },
     productImage: { width: '100%', height: '100%', objectFit: 'cover' },
-    productInfo: { padding: '20px' },
-    productBrand: { fontSize: '12px', color: theme.primary, fontWeight: '600', marginBottom: '6px', textTransform: 'uppercase' },
-    productName: { fontSize: '16px', fontWeight: '700', marginBottom: '8px', lineHeight: '1.3' },
-    currentPrice: { fontSize: '20px', fontWeight: '800', color: theme.accent },
-    originalPrice: { fontSize: '14px', color: modeColors.textMuted, textDecoration: 'line-through' },
-    colorDot: { width: '16px', height: '16px', borderRadius: '50%', border: `2px solid ${modeColors.borderLight}` },
-    modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(10px)' },
-    modalContent: { background: modeColors.bgModal, borderRadius: '28px', maxWidth: '900px', width: '95%', maxHeight: '90vh', overflow: 'auto', position: 'relative', border: `1px solid ${modeColors.border}`, color: modeColors.text },
-    cartSidebar: { position: 'fixed', top: 0, right: 0, width: '420px', height: '100vh', background: modeColors.bgModal, zIndex: 2000, padding: '28px', overflowY: 'auto', borderLeft: `1px solid ${modeColors.border}`, color: modeColors.text },
-    primaryBtn: { padding: '14px 32px', background: theme.gradient, border: 'none', borderRadius: '12px', color: '#fff', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
-    secondaryBtn: { padding: '14px 32px', background: modeColors.bgTertiary, border: `1px solid ${modeColors.borderLight}`, borderRadius: '12px', color: modeColors.text, fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-    input: { width: '100%', padding: '14px 18px', background: modeColors.inputBg, border: `1px solid ${modeColors.borderLight}`, borderRadius: '12px', color: modeColors.text, fontSize: '14px', outline: 'none' },
-    select: { width: '100%', padding: '14px 18px', background: modeColors.selectBg, border: `1px solid ${modeColors.borderLight}`, borderRadius: '12px', color: modeColors.text, fontSize: '14px', outline: 'none' },
+    productInfo: { padding: isMobile ? '12px' : '20px' },
+    productBrand: { fontSize: isMobile ? '10px' : '12px', color: theme.primary, fontWeight: '600', marginBottom: '6px', textTransform: 'uppercase' },
+    productName: { fontSize: isMobile ? '14px' : '16px', fontWeight: '700', marginBottom: '8px', lineHeight: '1.3' },
+    currentPrice: { fontSize: isMobile ? '16px' : '20px', fontWeight: '800', color: theme.accent },
+    originalPrice: { fontSize: isMobile ? '12px' : '14px', color: modeColors.textMuted, textDecoration: 'line-through' },
+    colorDot: { width: isMobile ? '14px' : '16px', height: isMobile ? '14px' : '16px', borderRadius: '50%', border: `2px solid ${modeColors.borderLight}` },
+    modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(10px)', padding: isMobile ? '10px' : 0 },
+    modalContent: { background: modeColors.bgModal, borderRadius: isMobile ? '20px' : '28px', maxWidth: '900px', width: '95%', maxHeight: '90vh', overflow: 'auto', position: 'relative', border: `1px solid ${modeColors.border}`, color: modeColors.text },
+    cartSidebar: { position: 'fixed', top: 0, right: 0, width: isMobile ? '100%' : '420px', height: '100vh', background: modeColors.bgModal, zIndex: 2000, padding: isMobile ? '20px' : '28px', overflowY: 'auto', borderLeft: `1px solid ${modeColors.border}`, color: modeColors.text },
+    primaryBtn: { padding: isMobile ? '12px 24px' : '14px 32px', background: theme.gradient, border: 'none', borderRadius: '12px', color: '#fff', fontSize: '14px', fontWeight: '700', cursor: 'pointer', touchAction: 'manipulation' },
+    secondaryBtn: { padding: isMobile ? '12px 24px' : '14px 32px', background: modeColors.bgTertiary, border: `1px solid ${modeColors.borderLight}`, borderRadius: '12px', color: modeColors.text, fontSize: '14px', fontWeight: '600', cursor: 'pointer', touchAction: 'manipulation' },
+    input: { width: '100%', padding: isMobile ? '12px 16px' : '14px 18px', background: modeColors.inputBg, border: `1px solid ${modeColors.borderLight}`, borderRadius: '12px', color: modeColors.text, fontSize: '14px', outline: 'none' },
+    select: { width: '100%', padding: isMobile ? '12px 16px' : '14px 18px', background: modeColors.selectBg, border: `1px solid ${modeColors.borderLight}`, borderRadius: '12px', color: modeColors.text, fontSize: '14px', outline: 'none' },
     label: { display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: '600', color: modeColors.textSecondary },
-    formGroup: { marginBottom: '24px' },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    th: { textAlign: 'left', padding: '16px', borderBottom: `1px solid ${modeColors.border}`, fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: theme.primary },
-    td: { padding: '18px 16px', borderBottom: `1px solid ${modeColors.border}`, fontSize: '14px' },
-    statCard: { background: modeColors.bgCard, borderRadius: '20px', padding: '24px', border: `1px solid ${modeColors.border}`, boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)' },
-    themeToggle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px', borderRadius: '12px', background: modeColors.bgTertiary, border: 'none', cursor: 'pointer', fontSize: '20px', transition: 'all 0.3s' },
+    formGroup: { marginBottom: isMobile ? '16px' : '24px' },
+    table: { width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '12px' : '14px', overflowX: 'auto', display: isMobile ? 'block' : 'table' },
+    th: { textAlign: 'left', padding: isMobile ? '12px 8px' : '16px', borderBottom: `1px solid ${modeColors.border}`, fontSize: isMobile ? '11px' : '12px', fontWeight: '700', textTransform: 'uppercase', color: theme.primary },
+    td: { padding: isMobile ? '12px 8px' : '18px 16px', borderBottom: `1px solid ${modeColors.border}`, fontSize: isMobile ? '12px' : '14px' },
+    statCard: { background: modeColors.bgCard, borderRadius: isMobile ? '16px' : '20px', padding: isMobile ? '16px' : '24px', border: `1px solid ${modeColors.border}`, boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)' },
+    themeToggle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: isMobile ? '40px' : '44px', height: isMobile ? '40px' : '44px', borderRadius: '12px', background: modeColors.bgTertiary, border: 'none', cursor: 'pointer', fontSize: isMobile ? '18px' : '20px', transition: 'all 0.3s', touchAction: 'manipulation' },
+    hamburger: { display: isMobile ? 'flex' : 'none', flexDirection: 'column', gap: '4px', cursor: 'pointer', padding: '8px', background: modeColors.bgTertiary, borderRadius: '8px', touchAction: 'manipulation' },
+    hamburgerLine: { width: '24px', height: '3px', background: modeColors.text, borderRadius: '2px', transition: 'all 0.3s' },
   };
 
   // Product Modal
@@ -537,11 +567,11 @@ export default function App() {
 
     return (
       <div style={s.modal} onClick={onClose}>
-        <div style={{ ...s.modalContent, display: 'grid', gridTemplateColumns: '1fr 1fr' }} onClick={e => e.stopPropagation()}>
-          <div style={{ padding: '32px', borderRight: `1px solid ${modeColors.border}` }}>
-            <img src={product.images[0]} alt="" style={{ width: '100%', height: '400px', objectFit: 'cover', borderRadius: '20px' }} />
+        <div style={{ ...s.modalContent, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', maxWidth: isMobile ? '95%' : '900px' }} onClick={e => e.stopPropagation()}>
+          <div style={{ padding: isMobile ? '20px' : '32px', borderRight: isMobile ? 'none' : `1px solid ${modeColors.border}`, borderBottom: isMobile ? `1px solid ${modeColors.border}` : 'none' }}>
+            <img src={product.images[0]} alt="" style={{ width: '100%', height: isMobile ? '280px' : '400px', objectFit: 'cover', borderRadius: '20px' }} />
           </div>
-          <div style={{ padding: '32px', overflowY: 'auto', maxHeight: '90vh' }}>
+          <div style={{ padding: isMobile ? '20px' : '32px', overflowY: 'auto', maxHeight: isMobile ? '50vh' : '90vh' }}>
             <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: modeColors.text, fontSize: '28px', cursor: 'pointer' }}>×</button>
             <div style={s.productBrand}>{product.brand}</div>
             <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>{product.name}</h2>
@@ -1009,13 +1039,13 @@ export default function App() {
     };
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '32px', padding: '32px', maxWidth: '1600px', margin: '0 auto' }}>
-        <aside style={{ background: modeColors.bgSecondary, borderRadius: '24px', padding: '28px', border: `1px solid ${modeColors.border}`, height: 'fit-content' }}>
-          <div style={{ fontSize: '24px', fontWeight: '800', marginBottom: '24px' }}>Admin Panel</div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr', gap: isMobile ? '16px' : '32px', padding: isMobile ? '16px' : '32px', maxWidth: '1600px', margin: '0 auto' }}>
+        <aside style={{ background: modeColors.bgSecondary, borderRadius: isMobile ? '16px' : '24px', padding: isMobile ? '20px' : '28px', border: `1px solid ${modeColors.border}`, height: 'fit-content' }}>
+          <div style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '800', marginBottom: isMobile ? '16px' : '24px' }}>Admin Panel</div>
           {[{ id: 'dashboard', icon: '📊', label: 'Dashboard' }, { id: 'products', icon: '👟', label: 'Products' }, { id: 'categories', icon: '📁', label: 'Categories' }, { id: 'orders', icon: '📦', label: 'Orders' }, { id: 'coupons', icon: '🎟️', label: 'Coupons' }, { id: 'payments', icon: '💳', label: 'Payments' }, { id: 'customers', icon: '👥', label: 'Customers' }, { id: 'settings', icon: '⚙️', label: 'Store Settings' }].map(item => (
-              <div key={item.id} onClick={() => setAdminTab(item.id)} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 18px', borderRadius: '14px', cursor: 'pointer', marginBottom: '8px', background: adminTab === item.id ? theme.gradient : 'transparent' }}><span style={{ fontSize: '18px' }}>{item.icon}</span><span style={{ fontWeight: '500' }}>{item.label}</span></div>
+              <div key={item.id} onClick={() => setAdminTab(item.id)} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: '14px', cursor: 'pointer', marginBottom: '8px', background: adminTab === item.id ? theme.gradient : 'transparent' }}><span style={{ fontSize: isMobile ? '16px' : '18px' }}>{item.icon}</span><span style={{ fontWeight: '500', fontSize: isMobile ? '13px' : '14px' }}>{item.label}</span></div>
           ))}
-          <button style={{ ...s.secondaryBtn, width: '100%', marginTop: '24px' }} onClick={() => { setIsLoggedIn(false); setCurrentView('customer'); }}>Back to Store</button>
+          <button style={{ ...s.secondaryBtn, width: '100%', marginTop: isMobile ? '16px' : '24px', padding: isMobile ? '10px' : '14px 32px' }} onClick={() => { setIsLoggedIn(false); window.location.hash = '#/customer'; }}>Back to Store</button>
         </aside>
         <main style={{ background: modeColors.bgSecondary, borderRadius: '24px', padding: '32px', border: `1px solid ${modeColors.border}` }}>
           {adminTab === 'dashboard' && (
@@ -1712,15 +1742,15 @@ export default function App() {
   // Customer View
   const CustomerView = () => (
     <>
-      <div style={{ background: `linear-gradient(135deg, ${theme.primary}33 0%, ${theme.secondary}33 100%)`, borderRadius: '32px', padding: '60px 48px', margin: '32px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '52px', fontWeight: '900', marginBottom: '16px', background: theme.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{storeConfig.tagline}</h1>
-        <p style={{ fontSize: '18px', color: modeColors.textSecondary, maxWidth: '500px', margin: '0 auto 24px' }}>Premium footwear for every occasion. Free shipping on orders above {currency === 'NPR' ? `रू ${storeConfig.freeShippingAbove}` : `₹ ${Math.round(storeConfig.freeShippingAbove / exchangeRate)}`}!</p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+      <div style={{ background: `linear-gradient(135deg, ${theme.primary}33 0%, ${theme.secondary}33 100%)`, borderRadius: isMobile ? '20px' : '32px', padding: isMobile ? '40px 24px' : '60px 48px', margin: isMobile ? '16px' : '32px', textAlign: 'center' }}>
+        <h1 style={{ fontSize: isMobile ? '32px' : '52px', fontWeight: '900', marginBottom: '16px', background: theme.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{storeConfig.tagline}</h1>
+        <p style={{ fontSize: isMobile ? '14px' : '18px', color: modeColors.textSecondary, maxWidth: '500px', margin: '0 auto 24px' }}>Premium footwear for every occasion. Free shipping on orders above {currency === 'NPR' ? `रू ${storeConfig.freeShippingAbove}` : `₹ ${Math.round(storeConfig.freeShippingAbove / exchangeRate)}`}!</p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button style={s.primaryBtn} onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}>Shop Now</button>
           <button style={s.secondaryBtn} onClick={() => setFilters({ ...filters, trending: true })}>View Collection</button>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: '12px', margin: '0 32px 32px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '12px', margin: isMobile ? '0 16px 16px' : '0 32px 32px', flexWrap: 'wrap' }}>
         {[{ key: 'trending', label: 'Trending' }, { key: 'newArrivals', label: 'New Arrivals' }, { key: 'onSale', label: 'On Sale' }].map(({ key, label }) => (
           <button key={key} onClick={() => setFilters({ ...filters, [key]: !filters[key] })} style={{ ...s.secondaryBtn, background: filters[key] ? theme.gradient : modeColors.bgTertiary, borderColor: filters[key] ? 'transparent' : modeColors.borderLight }}>{label}</button>
         ))}
@@ -1819,9 +1849,9 @@ export default function App() {
 
       {/* Recently Viewed Section */}
       {recentlyViewed.length > 0 && (
-        <div style={{ padding: '32px', maxWidth: '1600px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '24px' }}>Recently Viewed</h2>
-          <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '16px' }}>
+        <div style={{ padding: isMobile ? '16px' : '32px', maxWidth: '1600px', margin: '0 auto' }}>
+          <h2 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '800', marginBottom: isMobile ? '16px' : '24px' }}>Recently Viewed</h2>
+          <div style={{ display: 'flex', gap: isMobile ? '12px' : '20px', overflowX: 'auto', paddingBottom: '16px' }}>
             {recentlyViewed.map(p => (
               <div key={p.id} style={{ ...s.productCard, minWidth: '220px', cursor: 'pointer' }} onClick={() => setSelectedProduct(p)}>
                 <img src={p.images[0]} alt="" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '12px 12px 0 0' }} />
@@ -1837,10 +1867,10 @@ export default function App() {
       )}
 
       {/* Newsletter Signup Banner */}
-      <div style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`, padding: '48px 32px', margin: '32px', borderRadius: '24px', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>Get 15% Off Your First Order!</h2>
-        <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '24px' }}>Subscribe to our newsletter for exclusive deals, new arrivals, and style tips.</p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', maxWidth: '500px', margin: '0 auto' }}>
+      <div style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`, padding: isMobile ? '32px 20px' : '48px 32px', margin: isMobile ? '16px' : '32px', borderRadius: isMobile ? '16px' : '24px', textAlign: 'center' }}>
+        <h2 style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>Get 15% Off Your First Order!</h2>
+        <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '24px', fontSize: isMobile ? '13px' : '15px' }}>Subscribe to our newsletter for exclusive deals, new arrivals, and style tips.</p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', maxWidth: '500px', margin: '0 auto', flexDirection: isMobile ? 'column' : 'row' }}>
           <input style={{ ...s.input, flex: 1, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff' }} placeholder="Enter your email" value={newsletter} onChange={e => setNewsletter(e.target.value)} />
           <button style={{ ...s.secondaryBtn, background: '#fff', color: theme.primary, border: 'none' }} onClick={subscribeNewsletter}>Subscribe</button>
         </div>
@@ -1850,23 +1880,114 @@ export default function App() {
 
   return (
     <div style={s.app}>
+      {/* Navigation Bar - Only show appropriate view options */}
+      {(isLoggedIn || currentView === 'admin') && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', padding: isMobile ? '8px 12px' : '10px 16px', background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', borderBottom: `1px solid ${modeColors.border}` }}>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: modeColors.textSecondary, fontWeight: '600' }}>VIEW:</span>
+          <a 
+            href="#/customer" 
+            onClick={() => { setCurrentView('customer'); }} 
+            style={{ 
+              padding: isMobile ? '6px 12px' : '8px 14px', 
+              borderRadius: '12px', 
+              background: currentView === 'customer' ? theme.gradient : 'transparent', 
+              color: currentView === 'customer' ? '#fff' : modeColors.text, 
+              textDecoration: 'none', 
+              fontWeight: 700, 
+              fontSize: isMobile ? '12px' : '14px',
+              border: currentView === 'customer' ? 'none' : `1px solid ${modeColors.border}`,
+              transition: 'all 0.3s'
+            }}
+          >
+            🛒 Customer Store
+          </a>
+          <a 
+            href="#/admin" 
+            onClick={(e) => { 
+              e.preventDefault(); 
+              setCurrentView('admin'); 
+              window.location.hash = '#/admin'; 
+            }} 
+            style={{ 
+              padding: isMobile ? '6px 12px' : '8px 14px', 
+              borderRadius: '12px', 
+              background: currentView === 'admin' ? theme.gradient : 'transparent', 
+              color: currentView === 'admin' ? '#fff' : modeColors.text, 
+              textDecoration: 'none', 
+              fontWeight: 700, 
+              fontSize: isMobile ? '12px' : '14px',
+              border: currentView === 'admin' ? 'none' : `1px solid ${modeColors.border}`,
+              transition: 'all 0.3s'
+            }}
+          >
+            🔐 Admin Panel
+          </a>
+          {currentView === 'admin' && (
+            <span style={{ fontSize: isMobile ? '10px' : '11px', color: theme.accent, fontWeight: '600', marginLeft: '8px' }}>✓ Logged In</span>
+          )}
+        </div>
+      )}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: ${theme.primary}66; border-radius: 4px; } ::placeholder { color: ${modeColors.textMuted}; }`}</style>
       <header style={s.header}>
         <div style={s.topBar}><div style={{ display: 'flex', gap: '24px' }}><span>{storeConfig.email}</span><span>{storeConfig.phone}</span></div><span>Free shipping on orders above {currency === 'NPR' ? `रू ${storeConfig.freeShippingAbove}` : `₹ ${Math.round(storeConfig.freeShippingAbove / exchangeRate)}`}</span></div>
         <nav style={s.mainNav}>
-          <div style={s.logo} onClick={() => setCurrentView('customer')}><span style={{ fontSize: '40px' }}>{storeConfig.logo}</span><span style={s.logoText}>{storeConfig.name}</span></div>
-          <div style={s.searchBar}><input style={s.searchInput} placeholder="Search shoes, brands..." value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} /><button style={s.searchBtn}>Search</button></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button onClick={() => setDarkMode(!darkMode)} style={s.themeToggle} title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>{darkMode ? '☀️' : '🌙'}</button>
-            <div style={{ display: 'flex', background: modeColors.bgTertiary, borderRadius: '10px', padding: '4px' }}>
-              <button onClick={() => setCurrency('NPR')} style={{ padding: '8px 14px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', background: currency === 'NPR' ? theme.gradient : 'transparent', color: modeColors.text }}>NPR</button>
-              <button onClick={() => setCurrency('INR')} style={{ padding: '8px 14px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', background: currency === 'INR' ? theme.gradient : 'transparent', color: modeColors.text }}>INR</button>
+          <div style={s.logo} onClick={() => { setCurrentView('customer'); window.location.hash = '#/customer'; }}><span style={{ fontSize: isMobile ? '32px' : '40px' }}>{storeConfig.logo}</span><span style={s.logoText}>{storeConfig.name}</span></div>
+          
+          {/* Mobile Menu Toggle */}
+          {isMobile && (
+            <div style={s.hamburger} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              <div style={{ ...s.hamburgerLine, transform: mobileMenuOpen ? 'rotate(45deg) translateY(7px)' : 'none' }}></div>
+              <div style={{ ...s.hamburgerLine, opacity: mobileMenuOpen ? 0 : 1 }}></div>
+              <div style={{ ...s.hamburgerLine, transform: mobileMenuOpen ? 'rotate(-45deg) translateY(-7px)' : 'none' }}></div>
             </div>
-            <button style={s.iconBtn} title="Track Order" onClick={() => { setCustomerOrders([]); setTrackOrderId(''); setShowOrderTrack(true); }}>📦</button>
-            {compareList.length > 0 && <button style={s.iconBtn} title="Compare Products" onClick={() => setShowCompare(true)}>⚖️<span style={s.badge}>{compareList.length}</span></button>}
-            <button style={s.iconBtn}>🤍{wishlist.length > 0 && <span style={s.badge}>{wishlist.length}</span>}</button>
-            <button style={s.iconBtn} onClick={() => setShowCart(true)}>🛒{cart.length > 0 && <span style={s.badge}>{cart.reduce((sum, i) => sum + i.quantity, 0)}</span>}</button>
-            <button style={{ ...s.iconBtn, background: currentView === 'admin' && isLoggedIn ? theme.gradient : modeColors.bgTertiary }} onClick={() => isLoggedIn ? setCurrentView(currentView === 'admin' ? 'customer' : 'admin') : setShowLoginModal(true)}>{isLoggedIn ? '👤' : '🔐'}</button>
+          )}
+
+          {/* Desktop or Mobile Open Menu */}
+          <div style={{ 
+            display: isMobile && !mobileMenuOpen ? 'none' : 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
+            gap: isMobile ? '12px' : '16px',
+            position: isMobile ? 'absolute' : 'relative',
+            top: isMobile ? '100%' : 'auto',
+            left: isMobile ? 0 : 'auto',
+            right: isMobile ? 0 : 'auto',
+            background: isMobile ? modeColors.bgModal : 'transparent',
+            padding: isMobile ? '16px' : 0,
+            borderRadius: isMobile ? '0 0 16px 16px' : 0,
+            border: isMobile ? `1px solid ${modeColors.border}` : 'none',
+            borderTop: isMobile ? 'none' : 'none',
+            zIndex: isMobile ? 999 : 'auto',
+            boxShadow: isMobile ? '0 8px 24px rgba(0,0,0,0.3)' : 'none',
+            order: isMobile ? 4 : 2,
+          }}>
+            <div style={s.searchBar}><input style={s.searchInput} placeholder="Search shoes, brands..." value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} /><button style={s.searchBtn}>Search</button></div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px', flexWrap: 'wrap', justifyContent: isMobile ? 'space-between' : 'flex-start' }}>
+              <button onClick={() => setDarkMode(!darkMode)} style={s.themeToggle} title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>{darkMode ? '☀️' : '🌙'}</button>
+              <div style={{ display: 'flex', background: modeColors.bgTertiary, borderRadius: '10px', padding: '4px' }}>
+                <button onClick={() => setCurrency('NPR')} style={{ padding: isMobile ? '6px 10px' : '8px 14px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', background: currency === 'NPR' ? theme.gradient : 'transparent', color: modeColors.text }}>NPR</button>
+                <button onClick={() => setCurrency('INR')} style={{ padding: isMobile ? '6px 10px' : '8px 14px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', background: currency === 'INR' ? theme.gradient : 'transparent', color: modeColors.text }}>INR</button>
+              </div>
+              {currentView === 'customer' && (
+                <>
+                  <button style={s.iconBtn} title="Track Order" onClick={() => { setCustomerOrders([]); setTrackOrderId(''); setShowOrderTrack(true); if (isMobile) setMobileMenuOpen(false); }}>📦</button>
+                  {compareList.length > 0 && <button style={s.iconBtn} title="Compare Products" onClick={() => { setShowCompare(true); if (isMobile) setMobileMenuOpen(false); }}>⚖️<span style={s.badge}>{compareList.length}</span></button>}
+                  <button style={s.iconBtn} onClick={() => { if (isMobile) setMobileMenuOpen(false); }}>🤍{wishlist.length > 0 && <span style={s.badge}>{wishlist.length}</span>}</button>
+                  <button style={s.iconBtn} onClick={() => { setShowCart(true); if (isMobile) setMobileMenuOpen(false); }}>🛒{cart.length > 0 && <span style={s.badge}>{cart.reduce((sum, i) => sum + i.quantity, 0)}</span>}</button>
+                </>
+              )}
+              {/* Admin login button - only visible when not logged in OR when logged in to switch views */}
+              {!isLoggedIn && (
+                <button 
+                  style={{ ...s.iconBtn, background: modeColors.bgTertiary }} 
+                  onClick={() => { setShowLoginModal(true); if (isMobile) setMobileMenuOpen(false); }}
+                  title="Admin Login"
+                >
+                  🔐
+                </button>
+              )}
+            </div>
           </div>
         </nav>
       </header>
@@ -2002,14 +2123,14 @@ export default function App() {
         </div>
       )}
 
-      <footer style={{ background: 'rgba(0,0,0,0.4)', borderTop: `1px solid ${theme.primary}22`, padding: '48px 32px 24px', marginTop: '60px' }}>
-        <div style={{ maxWidth: '1600px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px' }}>
-          <div><div style={{ ...s.logo, marginBottom: '16px' }}><span style={{ fontSize: '32px' }}>{storeConfig.logo}</span><span style={{ ...s.logoText, fontSize: '24px' }}>{storeConfig.name}</span></div><p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: '1.7' }}>Premium footwear for every occasion.</p></div>
-          <div><h4 style={{ fontWeight: '700', marginBottom: '20px', color: theme.primary }}>Categories</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>{categories.slice(0, 5).map(c => <span key={c.id} style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', cursor: 'pointer' }}>{c.icon} {c.name}</span>)}</div></div>
-          <div><h4 style={{ fontWeight: '700', marginBottom: '20px', color: theme.primary }}>Contact</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}><span>{storeConfig.address}</span><span>{storeConfig.email}</span><span>{storeConfig.phone}</span></div></div>
-          <div><h4 style={{ fontWeight: '700', marginBottom: '20px', color: theme.primary }}>Payments</h4><div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>{['eSewa', 'Khalti', 'Razorpay', 'Paytm', 'COD'].map(m => <span key={m} style={{ background: 'rgba(255,255,255,0.08)', padding: '6px 12px', borderRadius: '6px', fontSize: '12px' }}>{m}</span>)}</div></div>
+      <footer style={{ background: 'rgba(0,0,0,0.4)', borderTop: `1px solid ${theme.primary}22`, padding: isMobile ? '32px 20px 16px' : '48px 32px 24px', marginTop: '60px' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? '24px' : '40px' }}>
+          <div><div style={{ ...s.logo, marginBottom: '16px' }}><span style={{ fontSize: isMobile ? '28px' : '32px' }}>{storeConfig.logo}</span><span style={{ ...s.logoText, fontSize: isMobile ? '20px' : '24px' }}>{storeConfig.name}</span></div><p style={{ color: 'rgba(255,255,255,0.6)', fontSize: isMobile ? '13px' : '14px', lineHeight: '1.7' }}>Premium footwear for every occasion.</p></div>
+          <div><h4 style={{ fontWeight: '700', marginBottom: '20px', color: theme.primary, fontSize: isMobile ? '14px' : '16px' }}>Categories</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>{categories.slice(0, 5).map(c => <span key={c.id} style={{ color: 'rgba(255,255,255,0.6)', fontSize: isMobile ? '13px' : '14px', cursor: 'pointer' }}>{c.icon} {c.name}</span>)}</div></div>
+          <div><h4 style={{ fontWeight: '700', marginBottom: '20px', color: theme.primary, fontSize: isMobile ? '14px' : '16px' }}>Contact</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: 'rgba(255,255,255,0.6)', fontSize: isMobile ? '13px' : '14px' }}><span>{storeConfig.address}</span><span>{storeConfig.email}</span><span>{storeConfig.phone}</span></div></div>
+          <div><h4 style={{ fontWeight: '700', marginBottom: '20px', color: theme.primary, fontSize: isMobile ? '14px' : '16px' }}>Payments</h4><div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>{['eSewa', 'Khalti', 'Razorpay', 'Paytm', 'COD'].map(m => <span key={m} style={{ background: 'rgba(255,255,255,0.08)', padding: '6px 12px', borderRadius: '6px', fontSize: isMobile ? '11px' : '12px' }}>{m}</span>)}</div></div>
         </div>
-        <div style={{ maxWidth: '1600px', margin: '40px auto 0', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>© 2024 {storeConfig.name}. All rights reserved. | Nepal | India</div>
+        <div style={{ maxWidth: '1600px', margin: '40px auto 0', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: isMobile ? '11px' : '13px' }}>© 2024 {storeConfig.name}. All rights reserved. | Nepal | India</div>
       </footer>
     </div>
   );

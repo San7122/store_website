@@ -26,3 +26,4 @@ Thumbs.db
 
 # Hugging Face
 .cache/
+.vercel
