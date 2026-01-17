@@ -3,10 +3,18 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": { 
+        "distDir": "dist"
+      }
     }
   ],
-  "routes": [
-    { "src": "^/(.*)$", "dest": "/index.html" }
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html",
+      "statusCode": 200
+    }
   ]
 }
