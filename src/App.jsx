@@ -1002,7 +1002,7 @@ export default function App() {
           Update Password
         </button>
         <p style={{ fontSize: '12px', color: modeColors.textMuted, marginTop: '12px' }}>
-          Note: Password changes are session-only. Default password: admin123
+          Note: Password changes are saved permanently. Default password: admin123
         </p>
       </div>
     );
