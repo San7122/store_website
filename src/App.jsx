@@ -2,23 +2,39 @@ import { useState, useMemo, useEffect } from 'react';
 
 export default function App() {
   // Store Configuration
-  const [storeConfig, setStoreConfig] = useState({
-    name: 'ShoeVault',
-    logo: '👟',
-    tagline: 'Step Into Style',
-    email: 'hello@shoevault.com',
-    phone: '+977 9800000000',
-    address: 'Kathmandu, Nepal',
-    primaryColor: '#ff6b35',
-    secondaryColor: '#f72585',
-    accentColor: '#2ecc71',
-    freeShippingAbove: 5000,
-    smsApiKey: '', // For SMS notifications
-    smsEnabled: false
+  const [storeConfig, setStoreConfig] = useState(() => {
+    const savedConfig = localStorage.getItem('storeConfig');
+    return savedConfig ? JSON.parse(savedConfig) : {
+      name: 'ShoeVault',
+      logo: '👟',
+      tagline: 'Step Into Style',
+      email: 'hello@shoevault.com',
+      phone: '+977 9800000000',
+      address: 'Kathmandu, Nepal',
+      primaryColor: '#ff6b35',
+      secondaryColor: '#f72585',
+      accentColor: '#2ecc71',
+      freeShippingAbove: 5000,
+      smsApiKey: '', // For SMS notifications
+      smsEnabled: false
+    };
   });
 
+  // Save store config to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('storeConfig', JSON.stringify(storeConfig));
+  }, [storeConfig]);
+
   // Admin Password (stored separately for security)
-  const [storedAdminPassword, setStoredAdminPassword] = useState('admin123');
+  const [storedAdminPassword, setStoredAdminPassword] = useState(() => {
+    const savedPassword = localStorage.getItem('adminPassword');
+    return savedPassword || 'admin123';
+  });
+
+  // Save admin password to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('adminPassword', storedAdminPassword);
+  }, [storedAdminPassword]);
 
   // Generate QR Code URL using Google Charts API
   const generateQRCode = (data, size = 200) => {
@@ -55,15 +71,23 @@ export default function App() {
   };
 
   // Payment Accounts Configuration
-  const [paymentAccounts, setPaymentAccounts] = useState({
-    esewa: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
-    khalti: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
-    fonepay: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
-    razorpay: { enabled: true, id: 'shoevault@upi', name: 'ShoeVault Store', qrCode: '' },
-    paytm: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
-    phonepe: { enabled: true, id: 'shoevault@ybl', name: 'ShoeVault Store', qrCode: '' },
-    bankTransfer: { enabled: true, bankName: 'Nepal Bank', accountName: 'ShoeVault Pvt Ltd', accountNumber: '1234567890', ifsc: '' }
+  const [paymentAccounts, setPaymentAccounts] = useState(() => {
+    const savedAccounts = localStorage.getItem('paymentAccounts');
+    return savedAccounts ? JSON.parse(savedAccounts) : {
+      esewa: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
+      khalti: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
+      fonepay: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
+      razorpay: { enabled: true, id: 'shoevault@upi', name: 'ShoeVault Store', qrCode: '' },
+      paytm: { enabled: true, id: '9800000000', name: 'ShoeVault Store', qrCode: '' },
+      phonepe: { enabled: true, id: 'shoevault@ybl', name: 'ShoeVault Store', qrCode: '' },
+      bankTransfer: { enabled: true, bankName: 'Nepal Bank', accountName: 'ShoeVault Pvt Ltd', accountNumber: '1234567890', ifsc: '' }
+    };
   });
+
+  // Save payment accounts to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('paymentAccounts', JSON.stringify(paymentAccounts));
+  }, [paymentAccounts]);
 
   // Theme derived from store config
   const theme = useMemo(() => ({
