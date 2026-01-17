@@ -1977,16 +1977,7 @@ export default function App() {
                   <button style={s.iconBtn} onClick={() => { setShowCart(true); if (isMobile) setMobileMenuOpen(false); }}>🛒{cart.length > 0 && <span style={s.badge}>{cart.reduce((sum, i) => sum + i.quantity, 0)}</span>}</button>
                 </>
               )}
-              {/* Admin login button - only visible when not logged in OR when logged in to switch views */}
-              {!isLoggedIn && (
-                <button 
-                  style={{ ...s.iconBtn, background: modeColors.bgTertiary }} 
-                  onClick={() => { setShowLoginModal(true); if (isMobile) setMobileMenuOpen(false); }}
-                  title="Admin Login"
-                >
-                  🔐
-                </button>
-              )}
+              {/* Admin login is accessed through the navigation bar only */}
             </div>
           </div>
         </nav>
